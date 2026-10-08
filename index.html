@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>กองกลาง ผมต.กฟจ.ขอนแก่น</title>
+    <!-- Google Fonts: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        kanit: ['Kanit', 'sans-serif'],
+                    },
+                    colors: {
+                        peaPurple: '#4A154B',
+                        peaGold: '#D4AF37',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Firebase SDKs (CDN v9 Compat - Firestore Only) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body class="font-kanit bg-slate-50 text-slate-800 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-peaPurple text-white shadow-md border-b-4 border-peaGold">
+        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                    ⚡ กองกลาง ผมต.กฟจ.ขอนแก่น
+                </h1>
+                <p class="text-slate-200 text-sm mt-1">แผนกมิเตอร์และหม้อแปลง การไฟฟ้าส่วนภูมิภาคจังหวัดขอนแก่น</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="requestOpenQR()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode"></i> QR Code พร้อมเพย์
+                </button>
+                <button onclick="openExpenseModal()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> บันทึกรายจ่าย
+                </button>
+                <div class="bg-white/10 px-4 py-2 rounded-xl border border-peaGold/40 text-center backdrop-blur-sm hidden sm:block">
+                    <p class="text-xs text-slate-300">กำหนดชำระก่อนวันที่ 15</p>
+                    <p id="countdown-text" class="text-sm font-bold text-peaGold">กำลังคำนวณ...</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- Controls Bar: Month Selector -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <label for="month-select" class="font-medium text-sm text-slate-600 whitespace-nowrap">ประจำเดือน:</label>
+                <select id="month-select" class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 font-medium text-slate-700 focus:outline-none focus:border-peaPurple w-full md:w-56">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+            <div class="text-xs text-slate-500 flex items-center gap-2">
+                <span class="inline-block w-3 h-3 rounded-full bg-emerald-500"></span> ชำระแล้ว (แนบสลิปแล้ว)
+                <span class="inline-block w-3 h-3 rounded-full bg-rose-500 ml-2"></span> ยังไม่ชำระ
+            </div>
+        </div>
+
+        <!-- Dashboard Financial Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">ยอดรับกองกลางทั้งหมด</p>
+                    <h3 id="total-paid" class="text-2xl font-bold text-emerald-600 mt-1">0 บาท</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">📥</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">รายจ่ายรวมเดือนนี้</p>
+                    <h3 id="total-expense" class="text-2xl font-bold text-rose-600 mt-1">0 บาท</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">📤</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">ยอดเงินกองกลางคงเหลือ</p>
+                    <h3 id="net-balance" class="text-2xl font-bold text-peaPurple mt-1">0 บาท</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-purple-50 text-peaPurple flex items-center justify-center text-xl font-bold">💰</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">ค้างชำระเดือนนี้</p>
+                    <h3 id="total-pending" class="text-2xl font-bold text-amber-600 mt-1">0 บาท</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">⏳</div>
+            </div>
+        </div>
+
+        <!-- Section 1: Members Payment Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-peaPurple text-white px-6 py-3.5 font-semibold text-sm flex justify-between items-center">
+                <span>📋 รายชื่อสมาชิกและสถานะการชำระเงินกองกลาง</span>
+                <span id="target-summary-text" class="text-xs bg-white/10 px-3 py-1 rounded-lg">เป้าหมายรวม: 0 บาท</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                            <th class="py-3.5 px-6 font-semibold">ชื่อ -สกุล / ตำแหน่ง</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">อัตราเงินกองกลาง</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">สถานะการจ่าย</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">สลิปเงินโอน</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">จัดการ (แนบสลิป)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="member-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Expense History Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-6">
+            <div class="bg-rose-900 text-white px-6 py-3.5 font-semibold text-sm flex justify-between items-center">
+                <span>💸 ประวัติรายจ่ายกองกลางประจำเดือน</span>
+                <button onclick="openExpenseModal()" class="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg transition">+ เพิ่มรายจ่าย</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                            <th class="py-3.5 px-6 font-semibold">รายละเอียดรายจ่าย</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">จำนวนเงิน</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">หลักฐาน/สลิป</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expense-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Security PIN Code -->
+    <div id="pin-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-center">
+            <div class="w-14 h-14 bg-purple-100 text-peaPurple rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 shadow-inner">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">รหัสความปลอดภัย</h3>
+            <p class="text-xs text-slate-500 mb-4">กรุณากรอกรหัสผ่านเพื่อยืนยันการทำรายการ</p>
+            
+            <div class="space-y-3">
+                <input type="password" id="pin-input" maxlength="10" placeholder="•••••" class="w-full text-center tracking-widest text-2xl bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 focus:outline-none focus:border-peaPurple font-bold">
+                <div class="flex gap-2">
+                    <button type="button" onclick="closePinModal()" class="w-1/2 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-sm transition">ยกเลิก</button>
+                    <button type="button" onclick="submitPinCode()" class="w-1/2 py-2.5 bg-peaPurple hover:bg-purple-900 text-white font-semibold rounded-xl text-sm transition shadow">ยืนยัน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for QR Code PromptPay -->
+    <div id="qr-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-center">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-qrcode text-peaPurple"></i> สแกนจ่ายเงินกองกลาง
+            </h3>
+            <p class="text-xs text-slate-500 mb-2">สแกนเข้า QR Code นี้ หรือ พร้อมเพย์</p>
+            
+            <div class="bg-purple-50 p-3 rounded-2xl border border-purple-100 inline-block mb-3">
+                <!-- Using direct embed from Googleusercontent source matching the user uploaded QR image -->
+                <img src="https://lh3.googleusercontent.com/d/1fam7_VGbVLEbbyrpbL031WjTXn1h2br6" id="qr-display-img" alt="PromptPay QR Code" class="w-64 h-auto mx-auto rounded-xl shadow-sm object-contain bg-white min-h-[220px]" onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=1fam7_VGbVLEbbyrpbL031WjTXn1h2br6';">
+            </div>
+
+            <div class="bg-peaPurple text-white p-3.5 rounded-2xl text-center space-y-1 mb-4 shadow-sm">
+                <p class="text-xs text-purple-200">โอนผ่านพร้อมเพย์ (Mobile Banking)</p>
+                <p class="text-xl font-bold tracking-wider text-peaGold">093-5599292</p>
+                <p class="text-xs font-medium text-slate-100">ชื่อบัญชี: รุ่งพร แถมวัฒนะ</p>
+            </div>
+
+            <button onclick="closeQRModal()" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-sm transition">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <!-- Modal for Viewing Slip -->
+    <div id="slip-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+            <h3 id="modal-title" class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                🧾 หลักฐานสลิปเงินโอน
+            </h3>
+            <div class="bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center mb-4 min-h-[250px] border border-slate-200">
+                <img id="modal-slip-img" src="" alt="หลักฐานสลิป" class="max-h-[400px] object-contain">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-xl transition">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Expense -->
+    <div id="expense-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                💸 บันทึกรายจ่ายกองกลาง
+            </h3>
+            <form id="expense-form" onsubmit="saveExpense(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">รายละเอียดรายจ่าย</label>
+                    <input type="text" id="exp-desc" required placeholder="เช่น ค่าอุปกรณ์สำนักงาน, ค่าสังสรรค์แผนก" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-peaPurple">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">จำนวนเงิน (บาท)</label>
+                    <input type="number" id="exp-amount" required min="1" placeholder="0" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-peaPurple">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">แนบสลิป / ใบเสร็จรายจ่าย</label>
+                    <input type="file" id="exp-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-peaPurple hover:file:bg-purple-100 cursor-pointer">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeExpenseModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-xl text-sm transition">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl text-sm transition">บันทึกรายจ่าย</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase Script & Logic -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXY-NCkjyh9gZUd0gq_b451rkaYfmTMOk",
+            authDomain: "pea-kongklang-khonkaen.firebaseapp.com",
+            projectId: "pea-kongklang-khonkaen",
+            storageBucket: "pea-kongklang-khonkaen.firebasestorage.app",
+            messagingSenderId: "953798890041",
+            appId: "1:953798890041:web:d80b4bd9f24d6ae54c73e8",
+            measurementId: "G-N2JBQ9EMG1"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const membersData = [
+            { id: "m1", name: "นายอรุณ อ่อนลำ", role: "หผ. (หัวหน้าแผนก)", amount: 300, tier: 1 },
+            { id: "m2", name: "นายรุ่งพร แถมวัฒนะ", role: "ชผ. (ผู้ช่วยหัวหน้าแผนก)", amount: 200, tier: 2 },
+            { id: "m3", name: "นายธนวัต ลีนาราชรุ่งเรือง", role: "พชง.6", amount: 200, tier: 2 },
+            { id: "m4", name: "นายวิรัตน์ คำทา", role: "พชง.6", amount: 200, tier: 2 },
+            { id: "m5", name: "นายวรชัย สีดาเหลา", role: "พชง.5", amount: 200, tier: 2 },
+            { id: "m6", name: "นายนันทวุฒิ โทวิชา", role: "พชง.6", amount: 200, tier: 2 },
+            { id: "m7", name: "นายนิพนธ์ วัฒนะประทาย", role: "พชง.6", amount: 200, tier: 2 },
+            { id: "m8", name: "นายพิชาณัณฒ์ บุญจวง", role: "พชง.7", amount: 200, tier: 2 },
+            { id: "m9", name: "นายวิษุวัต แสนเหวิม", role: "พชง.5", amount: 200, tier: 2 },
+            { id: "m10", name: "พี่ชาติ", role: "ชชง. (ผู้ช่วยช่างฯ)", amount: 100, tier: 3 },
+            { id: "m11", name: "พี่ส้มโอ", role: "ชชง. (ผู้ช่วยช่างฯ)", amount: 100, tier: 3 },
+            { id: "m12", name: "พี่ขิง", role: "ชชง. (ผู้ช่วยช่างฯ)", amount: 100, tier: 3 },
+            { id: "m13", name: "พี่นัท", role: "ชชง. (ผู้ช่วยช่างฯ)", amount: 100, tier: 3 }
+        ];
+
+        let currentMonth = "";
+        let paymentsCache = {};
+        let expensesCache = [];
+        let pendingAction = null;
+
+        function verifyPinCode(callback) {
+            pendingAction = callback;
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('pin-input').focus(), 100);
+        }
+
+        function closePinModal() {
+            document.getElementById('pin-modal').classList.add('hidden');
+            pendingAction = null;
+        }
+
+        function submitPinCode() {
+            const pin = document.getElementById('pin-input').value;
+            if (pin === "14045") {
+                const action = pendingAction;
+                closePinModal();
+                if (action) action();
+            } else {
+                alert("รหัสความปลอดภัยไม่ถูกต้อง!");
+                document.getElementById('pin-input').value = '';
+                document.getElementById('pin-input').focus();
+            }
+        }
+
+        function requestOpenQR() {
+            verifyPinCode(() => {
+                document.getElementById('qr-modal').classList.remove('hidden');
+            });
+        }
+
+        function initMonthSelector() {
+            const select = document.getElementById('month-select');
+            const now = new Date();
+            for (let i = -3; i <= 2; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const year = d.getFullYear() + 543;
+                const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                const label = `${monthNames[d.getMonth()]} ${year}`;
+                
+                const option = document.createElement('option');
+                option.value = val;
+                option.textContent = label;
+                select.appendChild(option);
+            }
+
+            currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            select.value = currentMonth;
+
+            select.addEventListener('change', (e) => {
+                currentMonth = e.target.value;
+                loadMonthData();
+            });
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            let target = new Date(now.getFullYear(), now.getMonth(), 15, 23, 59, 59);
+            if (now > target) {
+                target = new Date(now.getFullYear(), now.getMonth() + 1, 15, 23, 59, 59);
+            }
+            const diff = target - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((diff / 1000 / 60) % 60);
+
+            const countdownEl = document.getElementById('countdown-text');
+            if (countdownEl) {
+                countdownEl.textContent = `เหลือ ${days} วัน ${hours} ชม.`;
+            }
+        }
+
+        async function loadMonthData() {
+            paymentsCache = {};
+            expensesCache = [];
+            try {
+                const pSnap = await db.collection('payments').where('month', '==', currentMonth).get();
+                pSnap.forEach(doc => {
+                    paymentsCache[doc.data().memberId] = doc.data();
+                });
+
+                const eSnap = await db.collection('expenses').where('month', '==', currentMonth).get();
+                eSnap.forEach(doc => {
+                    expensesCache.push({ id: doc.id, ...doc.data() });
+                });
+            } catch (error) {
+                console.error("Error loading data: ", error);
+            }
+            renderTable();
+            renderExpenseTable();
+            updateSummary();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('member-table-body');
+            tbody.innerHTML = '';
+
+            membersData.forEach(m => {
+                const payment = paymentsCache[m.id] || { paid: false, slipUrl: '' };
+                const isPaid = payment.paid;
+                const hasSlip = Boolean(payment.slipUrl);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-4 px-6">
+                        <div class="font-semibold text-slate-800">${m.name}</div>
+                        <div class="text-xs text-slate-500">${m.role}</div>
+                    </td>
+                    <td class="py-4 px-6 text-center font-medium text-slate-700">${m.amount.toLocaleString()} บาท</td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-semibold inline-block ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                            ${isPaid ? '✅ ชำระแล้ว' : '⏳ ยังไม่ชำระ'}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        ${hasSlip ? `
+                            <button onclick="viewSlip('${payment.slipUrl}', 'สลิปเงินโอนของ ${m.name}')" class="text-peaPurple hover:underline font-medium text-xs bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100">
+                                👁️ ดูสลิป
+                            </button>
+                        ` : '<span class="text-slate-400 text-xs">ยังไม่มีสลิป</span>'}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <label id="label-${m.id}" class="cursor-pointer bg-purple-100 hover:bg-peaPurple hover:text-white text-peaPurple text-xs px-3 py-1.5 rounded-xl transition inline-block font-medium">
+                                📤 แนบสลิป
+                                <input type="file" accept="image/*" class="hidden" onchange="confirmUploadSlip(event, '${m.id}')">
+                            </label>
+                            ${hasSlip ? `
+                                <button onclick="confirmRemoveSlip('${m.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs px-2.5 py-1.5 rounded-xl transition font-medium" title="ลบสลิปและเปลี่ยนสถานะเป็นยังไม่ชำระ">
+                                    ลบสลิป
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderExpenseTable() {
+            const tbody = document.getElementById('expense-table-body');
+            tbody.innerHTML = '';
+
+            if (expensesCache.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400 text-xs">ยังไม่มีบันทึกรายจ่ายในเดือนนี้</td></tr>`;
+                return;
+            }
+
+            expensesCache.forEach(exp => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-4 px-6 font-medium text-slate-800">${exp.description}</td>
+                    <td class="py-4 px-6 text-center font-bold text-rose-600">${exp.amount.toLocaleString()} บาท</td>
+                    <td class="py-4 px-6 text-center">
+                        ${exp.slipUrl ? `
+                            <button onclick="viewSlip('${exp.slipUrl}', 'ใบเสร็จรายจ่าย: ${exp.description}')" class="text-rose-700 hover:underline font-medium text-xs bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
+                                👁️ ดูสลิปรายจ่าย
+                            </button>
+                        ` : '<span class="text-slate-400 text-xs">ไม่มีสลิป</span>'}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="confirmDeleteExpense('${exp.id}')" class="text-rose-600 hover:bg-rose-50 px-3 py-1 rounded-xl text-xs font-semibold transition">ลบ</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateSummary() {
+            let totalTarget = 0;
+            let totalPaid = 0;
+            let totalExpense = 0;
+
+            membersData.forEach(m => {
+                totalTarget += m.amount;
+                if (paymentsCache[m.id] && paymentsCache[m.id].paid) {
+                    totalPaid += m.amount;
+                }
+            });
+
+            expensesCache.forEach(exp => {
+                totalExpense += exp.amount;
+            });
+
+            const totalPending = totalTarget - totalPaid;
+            const netBalance = totalPaid - totalExpense;
+
+            document.getElementById('target-summary-text').textContent = `เป้าหมายรวม: ${totalTarget.toLocaleString()} บาท`;
+            document.getElementById('total-paid').textContent = `${totalPaid.toLocaleString()} บาท`;
+            document.getElementById('total-expense').textContent = `${totalExpense.toLocaleString()} บาท`;
+            document.getElementById('net-balance').textContent = `${netBalance.toLocaleString()} บาท`;
+            document.getElementById('total-pending').textContent = `${totalPending.toLocaleString()} บาท`;
+        }
+
+        function confirmUploadSlip(event, memberId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            verifyPinCode(() => {
+                executeUploadSlip(file, memberId);
+            });
+            event.target.value = '';
+        }
+
+        async function executeUploadSlip(file, memberId) {
+            const labelEl = document.getElementById(`label-${memberId}`);
+            if(labelEl) labelEl.textContent = "⏳ กำลังบันทึกสลิป...";
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Image = e.target.result;
+                const docId = `${currentMonth}_${memberId}`;
+
+                const data = {
+                    memberId: memberId,
+                    month: currentMonth,
+                    paid: true,
+                    slipUrl: base64Image,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                try {
+                    await db.collection('payments').doc(docId).set(data, { merge: true });
+                    paymentsCache[memberId] = data;
+                    renderTable();
+                    updateSummary();
+                    alert("แนบสลิปและเปลี่ยนสถานะเป็นชำระแล้วสำเร็จ!");
+                } catch (error) {
+                    alert("บันทึกสลิปไม่สำเร็จ: " + error.message);
+                    renderTable();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function confirmRemoveSlip(memberId) {
+            verifyPinCode(() => executeRemoveSlip(memberId));
+        }
+
+        async function executeRemoveSlip(memberId) {
+            if (!confirm("คุณต้องการลบสลิปและเปลี่ยนสถานะกลับเป็นยังไม่ชำระใช่หรือไม่?")) return;
+
+            const docId = `${currentMonth}_${memberId}`;
+            const data = {
+                memberId: memberId,
+                month: currentMonth,
+                paid: false,
+                slipUrl: '',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await db.collection('payments').doc(docId).set(data, { merge: true });
+                paymentsCache[memberId] = data;
+                renderTable();
+                updateSummary();
+                alert("ลบสลิปและอัปเดตสถานะสำเร็จ!");
+            } catch (error) {
+                alert("ดำเนินการไม่สำเร็จ: " + error.message);
+            }
+        }
+
+        function closeQRModal() {
+            document.getElementById('qr-modal').classList.add('hidden');
+        }
+
+        function openExpenseModal() {
+            verifyPinCode(() => {
+                document.getElementById('expense-modal').classList.remove('hidden');
+            });
+        }
+
+        function closeExpenseModal() {
+            document.getElementById('expense-modal').classList.add('hidden');
+            document.getElementById('expense-form').reset();
+        }
+
+        async function saveExpense(event) {
+            event.preventDefault();
+            const desc = document.getElementById('exp-desc').value;
+            const amount = parseFloat(document.getElementById('exp-amount').value);
+            const fileInput = document.getElementById('exp-file');
+
+            const saveRecord = async (imgBase64) => {
+                const expData = {
+                    month: currentMonth,
+                    description: desc,
+                    amount: amount,
+                    slipUrl: imgBase64 || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                try {
+                    const docRef = await db.collection('expenses').add(expData);
+                    expensesCache.push({ id: docRef.id, ...expData });
+                    renderExpenseTable();
+                    updateSummary();
+                    closeExpenseModal();
+                    alert("บันทึกรายจ่ายสำเร็จเรียบร้อยครับ!");
+                } catch (error) {
+                    alert("บันทึกรายจ่ายไม่สำเร็จ: " + error.message);
+                }
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveRecord(e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveRecord('');
+            }
+        }
+
+        function confirmDeleteExpense(expenseId) {
+            verifyPinCode(() => executeDeleteExpense(expenseId));
+        }
+
+        async function executeDeleteExpense(expenseId) {
+            if (!confirm("คุณต้องการลบรายการรายจ่ายนี้ใช่หรือไม่?")) return;
+            
+            try {
+                await db.collection('expenses').doc(expenseId).delete();
+                expensesCache = expensesCache.filter(e => e.id !== expenseId);
+                renderExpenseTable();
+                updateSummary();
+                alert("ลบรายการรายจ่ายสำเร็จ!");
+            } catch (error) {
+                alert("ลบไม่สำเร็จ: " + error.message);
+            }
+        }
+
+        function viewSlip(url, title) {
+            document.getElementById('modal-title').innerHTML = `🧾 ${title}`;
+            document.getElementById('modal-slip-img').src = url;
+            document.getElementById('slip-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('slip-modal').classList.add('hidden');
+        }
+
+        window.onload = () => {
+            initMonthSelector();
+            loadMonthData();
+            updateCountdown();
+            setInterval(updateCountdown, 60000);
+        };
+    </script>
+</body>
+</html>

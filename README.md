@@ -1,1 +1,0 @@
-# kongklang-khonkaen
