@@ -40,16 +40,19 @@
                 </h1>
                 <p class="text-slate-200 text-sm mt-1">แผนกมิเตอร์และหม้อแปลง การไฟฟ้าส่วนภูมิภาคจังหวัดขอนแก่น</p>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="requestOpenQR()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-2">
-                    <i class="fa-solid fa-qrcode"></i> QR Code พร้อมเพย์
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="requestOpenQR()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-3 py-2 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-qrcode"></i> QR พร้อมเพย์
                 </button>
-                <button onclick="openExpenseModal()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-2">
-                    <i class="fa-solid fa-file-invoice-dollar"></i> บันทึกรายจ่าย
+                <button onclick="openIncomeModal()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-3 py-2 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> + รายรับอื่นๆ
                 </button>
-                <div class="bg-white/10 px-4 py-2 rounded-xl border border-peaGold/40 text-center backdrop-blur-sm hidden sm:block">
-                    <p class="text-xs text-slate-300">กำหนดชำระก่อนวันที่ 15</p>
-                    <p id="countdown-text" class="text-sm font-bold text-peaGold">กำลังคำนวณ...</p>
+                <button onclick="openExpenseModal()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-3 py-2 rounded-xl text-xs sm:text-sm shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> + รายจ่าย
+                </button>
+                <div class="bg-white/10 px-3 py-1.5 rounded-xl border border-peaGold/40 text-center backdrop-blur-sm hidden sm:block">
+                    <p class="text-[10px] text-slate-300">กำหนดชำระก่อนวันที่ 15</p>
+                    <p id="countdown-text" class="text-xs font-bold text-peaGold">กำลังคำนวณ...</p>
                 </div>
             </div>
         </div>
@@ -72,11 +75,18 @@
             </div>
         </div>
 
-        <!-- Dashboard Financial Summary Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Dashboard Financial Summary Cards (5 Cards Layout) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-slate-500 font-medium">ยอดรับกองกลางทั้งหมด</p>
+                    <p class="text-xs text-slate-500 font-medium">ยอดรับรวมทั้งหมด (ทุกเดือน)</p>
+                    <h3 id="total-all-income" class="text-2xl font-bold text-emerald-700 mt-1">0 บาท</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-bold">🏦</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">ยอดรับกองกลางเดือนนี้</p>
                     <h3 id="total-paid" class="text-2xl font-bold text-emerald-600 mt-1">0 บาท</h3>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">📥</div>
@@ -128,7 +138,30 @@
             </div>
         </div>
 
-        <!-- Section 2: Expense History Table -->
+        <!-- Section 2: Other Income Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-6">
+            <div class="bg-emerald-800 text-white px-6 py-3.5 font-semibold text-sm flex justify-between items-center">
+                <span>💰 รายรับอื่นๆ ประจำเดือน</span>
+                <button onclick="openIncomeModal()" class="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg transition">+ เพิ่มรายรับอื่นๆ</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                            <th class="py-3.5 px-6 font-semibold">รายละเอียดรายรับ</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">จำนวนเงิน</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">หลักฐาน/สลิป</th>
+                            <th class="py-3.5 px-6 font-semibold text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="income-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 3: Expense History Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-6">
             <div class="bg-rose-900 text-white px-6 py-3.5 font-semibold text-sm flex justify-between items-center">
                 <span>💸 ประวัติรายจ่ายกองกลางประจำเดือน</span>
@@ -180,7 +213,6 @@
             <p class="text-xs text-slate-500 mb-2">สแกนเข้า QR Code นี้ หรือ พร้อมเพย์</p>
             
             <div class="bg-purple-50 p-3 rounded-2xl border border-purple-100 inline-block mb-3">
-                <!-- Using direct embed from Googleusercontent source matching the user uploaded QR image -->
                 <img src="https://lh3.googleusercontent.com/d/1fam7_VGbVLEbbyrpbL031WjTXn1h2br6" id="qr-display-img" alt="PromptPay QR Code" class="w-64 h-auto mx-auto rounded-xl shadow-sm object-contain bg-white min-h-[220px]" onerror="this.onerror=null; this.src='https://drive.google.com/uc?export=view&id=1fam7_VGbVLEbbyrpbL031WjTXn1h2br6';">
             </div>
 
@@ -209,24 +241,51 @@
         </div>
     </div>
 
+    <!-- Modal for Adding Other Income -->
+    <div id="income-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 text-emerald-800">
+                💰 บันทึกรายรับอื่นๆ
+            </h3>
+            <form id="income-form" onsubmit="saveIncome(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">รายละเอียดรายรับ</label>
+                    <input type="text" id="inc-desc" required placeholder="เช่น เงินสนับสนุน, เงินสมทบเพิ่มเติม" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">จำนวนเงิน (บาท)</label>
+                    <input type="number" id="inc-amount" required min="1" placeholder="0" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">แนบสลิป / หลักฐานรายรับ</label>
+                    <input type="file" id="inc-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeIncomeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-xl text-sm transition">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-medium rounded-xl text-sm transition">บันทึกรายรับ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal for Adding Expense -->
     <div id="expense-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
-            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 text-rose-800">
                 💸 บันทึกรายจ่ายกองกลาง
             </h3>
             <form id="expense-form" onsubmit="saveExpense(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">รายละเอียดรายจ่าย</label>
-                    <input type="text" id="exp-desc" required placeholder="เช่น ค่าอุปกรณ์สำนักงาน, ค่าสังสรรค์แผนก" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-peaPurple">
+                    <input type="text" id="exp-desc" required placeholder="เช่น ค่าอุปกรณ์สำนักงาน, ค่าสังสรรค์แผนก" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-rose-700">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">จำนวนเงิน (บาท)</label>
-                    <input type="number" id="exp-amount" required min="1" placeholder="0" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-peaPurple">
+                    <input type="number" id="exp-amount" required min="1" placeholder="0" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-rose-700">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">แนบสลิป / ใบเสร็จรายจ่าย</label>
-                    <input type="file" id="exp-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-peaPurple hover:file:bg-purple-100 cursor-pointer">
+                    <input type="file" id="exp-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 cursor-pointer">
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeExpenseModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-xl text-sm transition">ยกเลิก</button>
@@ -269,7 +328,9 @@
 
         let currentMonth = "";
         let paymentsCache = {};
+        let incomesCache = [];
         let expensesCache = [];
+        let allTimeTotalIncome = 0; // เก็บยอดรับรวมทุกเดือนตลอดกาล
         let pendingAction = null;
 
         function verifyPinCode(callback) {
@@ -345,13 +406,45 @@
             }
         }
 
+        async function loadAllTimeIncome() {
+            try {
+                let total = 0;
+                // ดึงข้อมูล payments ทั้งหมดทุกเดือน
+                const pSnap = await db.collection('payments').where('paid', '==', true).get();
+                pSnap.forEach(doc => {
+                    const data = doc.data();
+                    const m = membersData.find(item => item.id === data.memberId);
+                    if (m) total += m.amount;
+                });
+
+                // ดึงข้อมูล incomes (รายรับอื่นๆ) ทั้งหมดทุกเดือน
+                const iSnap = await db.collection('incomes').get();
+                iSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (data.amount) total += data.amount;
+                });
+
+                allTimeTotalIncome = total;
+                const el = document.getElementById('total-all-income');
+                if (el) el.textContent = `${allTimeTotalIncome.toLocaleString()} บาท`;
+            } catch (error) {
+                console.error("Error loading all-time income: ", error);
+            }
+        }
+
         async function loadMonthData() {
             paymentsCache = {};
+            incomesCache = [];
             expensesCache = [];
             try {
                 const pSnap = await db.collection('payments').where('month', '==', currentMonth).get();
                 pSnap.forEach(doc => {
                     paymentsCache[doc.data().memberId] = doc.data();
+                });
+
+                const iSnap = await db.collection('incomes').where('month', '==', currentMonth).get();
+                iSnap.forEach(doc => {
+                    incomesCache.push({ id: doc.id, ...doc.data() });
                 });
 
                 const eSnap = await db.collection('expenses').where('month', '==', currentMonth).get();
@@ -362,8 +455,10 @@
                 console.error("Error loading data: ", error);
             }
             renderTable();
+            renderIncomeTable();
             renderExpenseTable();
             updateSummary();
+            loadAllTimeIncome();
         }
 
         function renderTable() {
@@ -413,6 +508,36 @@
             });
         }
 
+        function renderIncomeTable() {
+            const tbody = document.getElementById('income-table-body');
+            tbody.innerHTML = '';
+
+            if (incomesCache.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400 text-xs">ยังไม่มีบันทึกรายรับอื่นๆ ในเดือนนี้</td></tr>`;
+                return;
+            }
+
+            incomesCache.forEach(inc => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-4 px-6 font-medium text-slate-800">${inc.description}</td>
+                    <td class="py-4 px-6 text-center font-bold text-emerald-600">+${inc.amount.toLocaleString()} บาท</td>
+                    <td class="py-4 px-6 text-center">
+                        ${inc.slipUrl ? `
+                            <button onclick="viewSlip('${inc.slipUrl}', 'หลักฐานรายรับ: ${inc.description}')" class="text-emerald-700 hover:underline font-medium text-xs bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
+                                👁️ ดูหลักฐาน
+                            </button>
+                        ` : '<span class="text-slate-400 text-xs">ไม่มีหลักฐาน</span>'}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="confirmDeleteIncome('${inc.id}')" class="text-rose-600 hover:bg-rose-50 px-3 py-1 rounded-xl text-xs font-semibold transition">ลบ</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         function renderExpenseTable() {
             const tbody = document.getElementById('expense-table-body');
             tbody.innerHTML = '';
@@ -427,7 +552,7 @@
                 tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
                 tr.innerHTML = `
                     <td class="py-4 px-6 font-medium text-slate-800">${exp.description}</td>
-                    <td class="py-4 px-6 text-center font-bold text-rose-600">${exp.amount.toLocaleString()} บาท</td>
+                    <td class="py-4 px-6 text-center font-bold text-rose-600">-${exp.amount.toLocaleString()} บาท</td>
                     <td class="py-4 px-6 text-center">
                         ${exp.slipUrl ? `
                             <button onclick="viewSlip('${exp.slipUrl}', 'ใบเสร็จรายจ่าย: ${exp.description}')" class="text-rose-700 hover:underline font-medium text-xs bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
@@ -445,25 +570,32 @@
 
         function updateSummary() {
             let totalTarget = 0;
-            let totalPaid = 0;
+            let totalMemberPaid = 0;
+            let totalOtherIncome = 0;
             let totalExpense = 0;
 
             membersData.forEach(m => {
                 totalTarget += m.amount;
                 if (paymentsCache[m.id] && paymentsCache[m.id].paid) {
-                    totalPaid += m.amount;
+                    totalMemberPaid += m.amount;
                 }
+            });
+
+            incomesCache.forEach(inc => {
+                totalOtherIncome += inc.amount;
             });
 
             expensesCache.forEach(exp => {
                 totalExpense += exp.amount;
             });
 
-            const totalPending = totalTarget - totalPaid;
-            const netBalance = totalPaid - totalExpense;
+            // ยอดรับกองกลางเฉพาะเดือนนี้ (รวมเงินสมาชิก + รายรับอื่นๆ ของเดือนนี้)
+            const totalPaidMonth = totalMemberPaid + totalOtherIncome;
+            const totalPending = totalTarget - totalMemberPaid;
+            const netBalance = totalPaidMonth - totalExpense;
 
             document.getElementById('target-summary-text').textContent = `เป้าหมายรวม: ${totalTarget.toLocaleString()} บาท`;
-            document.getElementById('total-paid').textContent = `${totalPaid.toLocaleString()} บาท`;
+            document.getElementById('total-paid').textContent = `${totalPaidMonth.toLocaleString()} บาท`;
             document.getElementById('total-expense').textContent = `${totalExpense.toLocaleString()} บาท`;
             document.getElementById('net-balance').textContent = `${netBalance.toLocaleString()} บาท`;
             document.getElementById('total-pending').textContent = `${totalPending.toLocaleString()} บาท`;
@@ -501,6 +633,7 @@
                     paymentsCache[memberId] = data;
                     renderTable();
                     updateSummary();
+                    loadAllTimeIncome();
                     alert("แนบสลิปและเปลี่ยนสถานะเป็นชำระแล้วสำเร็จ!");
                 } catch (error) {
                     alert("บันทึกสลิปไม่สำเร็จ: " + error.message);
@@ -531,6 +664,7 @@
                 paymentsCache[memberId] = data;
                 renderTable();
                 updateSummary();
+                loadAllTimeIncome();
                 alert("ลบสลิปและอัปเดตสถานะสำเร็จ!");
             } catch (error) {
                 alert("ดำเนินการไม่สำเร็จ: " + error.message);
@@ -541,6 +675,77 @@
             document.getElementById('qr-modal').classList.add('hidden');
         }
 
+        // --- Income Modal Functions ---
+        function openIncomeModal() {
+            verifyPinCode(() => {
+                document.getElementById('income-modal').classList.remove('hidden');
+            });
+        }
+
+        function closeIncomeModal() {
+            document.getElementById('income-modal').classList.add('hidden');
+            document.getElementById('income-form').reset();
+        }
+
+        async function saveIncome(event) {
+            event.preventDefault();
+            const desc = document.getElementById('inc-desc').value;
+            const amount = parseFloat(document.getElementById('inc-amount').value);
+            const fileInput = document.getElementById('inc-file');
+
+            const saveRecord = async (imgBase64) => {
+                const incData = {
+                    month: currentMonth,
+                    description: desc,
+                    amount: amount,
+                    slipUrl: imgBase64 || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                try {
+                    const docRef = await db.collection('incomes').add(incData);
+                    incomesCache.push({ id: docRef.id, ...incData });
+                    renderIncomeTable();
+                    updateSummary();
+                    loadAllTimeIncome();
+                    closeIncomeModal();
+                    alert("บันทึกรายรับอื่นๆ สำเร็จเรียบร้อยครับ!");
+                } catch (error) {
+                    alert("บันทึกรายรับไม่สำเร็จ: " + error.message);
+                }
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveRecord(e.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveRecord('');
+            }
+        }
+
+        function confirmDeleteIncome(incomeId) {
+            verifyPinCode(() => executeDeleteIncome(incomeId));
+        }
+
+        async function executeDeleteIncome(incomeId) {
+            if (!confirm("คุณต้องการลบรายการรายรับนี้ใช่หรือไม่?")) return;
+            
+            try {
+                await db.collection('incomes').doc(incomeId).delete();
+                incomesCache = incomesCache.filter(i => i.id !== incomeId);
+                renderIncomeTable();
+                updateSummary();
+                loadAllTimeIncome();
+                alert("ลบรายการรายรับสำเร็จ!");
+            } catch (error) {
+                alert("ลบไม่สำเร็จ: " + error.message);
+            }
+        }
+
+        // --- Expense Modal Functions ---
         function openExpenseModal() {
             verifyPinCode(() => {
                 document.getElementById('expense-modal').classList.remove('hidden');
